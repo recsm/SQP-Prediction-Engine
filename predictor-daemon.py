@@ -33,7 +33,7 @@ class Predictor:
         self.busy = False
         
         r.setwd('/srv/sqp_prediction/')
-        r['source']('/srv/sqp_prediction/predict/predict.R')
+        r['source']('predict/predict.R')
 
         globalenv['digits'] = digits # Set number of digits, not really used
         globalenv['django.debug'] = DEBUG # Pass Django debug setting
