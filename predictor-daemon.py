@@ -2,30 +2,20 @@
 # DEBUG hardcode path
 import sys
 import os
-#sys.path.extend(['/Users/daob/Documents', '/Users/daob/Documents/sqp_project'])
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'sqp_project.settings'
-sys.path.extend([os.path.dirname(os.path.realpath(__file__)) + '/../../'])
-sys.path.extend([os.path.dirname(os.path.realpath(__file__)) + '/../'])
-
 
 import Pyro4
 
 from rpy2 import rinterface
 from rpy2.robjects import r, globalenv
 
-from django.conf import settings
-if settings.DEBUG:
-    import time
-
-from sqp.models import Characteristic
-from sqp.stats import  quartiles, stdev, median_average_deviation #, quantile,
-
+from stats import  quartiles, stdev, median_average_deviation #, quantile,
 
 # MD5Sum of a now-famous password. Pyro uses this to sign the message
 #   Need to make sure nameserver and client use this
 #   or more easily just export PYRO_HMAC_KEY='2d736347ff7487d559d7fb3cfc1e92dd'
 Pyro4.config.HMAC_KEY = "2d736347ff7487d559d7fb3cfc1e92dd"
+
+DEBUG = True
 
 def fmt(num, digits=3):
     "Format (vector of) floats as strings, using the specified precision."
@@ -42,13 +32,10 @@ class Predictor:
         self.digits = digits
         self.busy = False
 
-        r.setwd(settings.PROJECT_DIR)
-        # DEBUG hardcode path
-        #r.setwd("~/Documents/sqp_project/")
-        r['source']('sqp/predict/predict.R')
+        r['source']('/srv/sqp_prediction/predict/predict.R')
 
         globalenv['digits'] = digits # Set number of digits, not really used
-        globalenv['django.debug'] = settings.DEBUG # Pass Django debug setting
+        globalenv['django.debug'] = DEBUG # Pass Django debug setting
 
 
     def _summarize_predictions(self, est, pre, digits=3):
@@ -102,18 +89,6 @@ class Predictor:
         """Take question and codes and return list of choices and names, usable
         by R. Also add missing information such as the country and language."""
 
-        # Four characteristics are still missing from the meta-interview
-        # DEBUG: until these chars are added to the survey interview, just fake
-        # them:
-        def getch(shnam): # quick hack
-            return Characteristic.objects.get(short_name = shnam)
-        codes.extend([
-            {'code':'1', 'characteristic':getch('comp_assist')},
-            {'code':'1', 'characteristic':getch('interviewer')},
-            {'code':'1', 'characteristic':getch('visual')},
-            {'code':'55', 'characteristic':getch('position')},
-        ])
-
         # Put variable names and choices in lists to copy to R
         choices = [code['code'] for code in codes]
         var_names = [code['characteristic'].short_name for code in codes]
@@ -131,7 +106,7 @@ class Predictor:
         Codings contain some value that was not in the original dataset. In
         that case no prediction can be made."""
         
-	if settings.DEBUG: start = time.time()
+	if DEBUG: start = time.time()
         # Convert the SQP codes object to objects usable by R
         choices, var_names = self._get_choices(question, codes, user, charset)
 #print globalenv.keys()
@@ -148,7 +123,7 @@ class Predictor:
 	# Don't dict because they might be ordered
         predictions = zip(r['names'](result), (fmt(rs) for rs in result))
 
-	if settings.DEBUG:
+	if DEBUG:
 	    elapsed = time.time() - start#DEBUG
 	    print "Got conditional of {} effects for {}, took {:2.3f}s".format(what,
 		    xname, elapsed)
