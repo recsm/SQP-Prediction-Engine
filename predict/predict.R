@@ -1,23 +1,23 @@
 library(randomForest)
 
 # Load in helper functions
-source('sqp/predict/helpers.R')
+source('helpers.R')
 
 # Load in levels of original training covariates
-load(file = "sqp/predict/xlevels_cat.Rdata")
-load(file = "sqp/predict/xlevels_fre.Rdata")
+load(file = "xlevels_cat.Rdata")
+load(file = "xlevels_fre.Rdata")
 
 # Load prediction models
 #########################################################################
 # RAIMforest is not a typo: it stands for RAndom IMputation Forests
 print(system.time( {
-    load('sqp/predict/raimforest.cat-rel.Rdata')
-    load('sqp/predict/raimforest.fre-rel.Rdata')
+    load('raimforest.cat-rel.Rdata')
+    load('raimforest.fre-rel.Rdata')
 }
 ))
 print(system.time({
-    load('sqp/predict/raimforest.cat-val.Rdata')
-    load('sqp/predict/raimforest.fre-val.Rdata')
+    load('raimforest.cat-val.Rdata')
+    load('raimforest.fre-val.Rdata')
 }))
 
 # Set default number of digits for rounding, is also set from python
@@ -44,7 +44,7 @@ get.pred.interval <- function(pre, size=95)
 #DEBUG print and save the obtained codes
 #print("sqp.codes is")
 #print(sqp.codes)
-#save(sqp.codes, file='sqp/predict/test-codes.Rdata')
+#save(sqp.codes, file='test-codes.Rdata')
 
 #########################################################################
 # Create a dataset for prediction from the SQP codes passed by Django   #
@@ -177,7 +177,7 @@ get.nd.from.choices <- function(choices, var.names) {
 
     #print('nd is now:')
     #print(nd)
-    #save(nd, file='~/Documents/sqp_project/sqp/predict/nd_temp.Rdata')
+    #save(nd, file='~/Documents/sqp_project/nd_temp.Rdata')
 
     rf.xlevels <- raimforest.cat.rel$forest$xlevels
     # Convert to proper types, using the information in xlevels
@@ -223,7 +223,7 @@ prophesize <- function(choices, var.names) {
     nd  <- get.nd.from.choices(choices, var.names)
     #print('nd is now:')
     #print(nd)
-    #save(nd, file='~/Documents/sqp_project/sqp/predict/nd_temp.Rdata')
+    #save(nd, file='~/Documents/sqp_project/nd_temp.Rdata')
 
     
     ## The following is DEBUG code, comment out or remove in production:
