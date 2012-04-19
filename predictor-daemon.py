@@ -31,7 +31,8 @@ class Predictor:
         """Load in the predictor objects in R. This takes a few seconds."""
         self.digits = digits
         self.busy = False
-
+        
+        r.setwd('/srv/sqp_prediction/')
         r['source']('/srv/sqp_prediction/predict/predict.R')
 
         globalenv['digits'] = digits # Set number of digits, not really used
