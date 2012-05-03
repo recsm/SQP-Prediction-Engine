@@ -50,11 +50,11 @@ class Predictor:
         agg['median'] = agg['quartiles'].pop(1) # Middle of quartiles is median
         return agg
 
-    def get_predictions(self, question, codes, user, charset, digits=3):
-        """Obtain predictions from the R environment given the question and
+    def get_predictions(self, country, language, codes, digits=3):
+        """Obtain predictions from the R environment given the country, language and
         codes provided."""
         
-	pr = self._get_raw_predictions(question, codes, user, charset)
+        pr = self._get_raw_predictions(country, language, codes)
 
         return {\
         'reliability_coefficient' : self._summarize_predictions(pr['est.rel'], pr['pre.rel']),
@@ -67,15 +67,15 @@ class Predictor:
         'common_method_variance' : self._summarize_predictions(pr['est.cmv'], pr['pre.cmv']),
         }
 
-    def _get_raw_predictions(self, question, codes, user, charset):
-        """Obtain predictions from the R environment given the question and
+    def _get_raw_predictions(self, country, language, codes):
+        """Obtain predictions from the R environment given the country, language and
         codes provided."""
         # Signal busy in case client wants to try another server
         #   (Only worth it when the load is very high)
         self.busy = True
 
         # Convert the SQP codes object to objects usable by
-        choices, var_names = self._get_choices(question, codes, user, charset)
+        choices, var_names = self._get_choices(country, language, codes)
 
         # Obtain the predictions, getting rid of rpy2 classes
         result = globalenv['prophesize'](choices, var_names)
@@ -86,30 +86,30 @@ class Predictor:
         self.busy = False
         return predictions
 
-    def _get_choices(self, question, codes, user, charset):
-        """Take question and codes and return list of choices and names, usable
+    def _get_choices(self, country, language, codes):
+        """Take country, language and codes and return list of choices and names, usable
         by R. Also add missing information such as the country and language."""
 
         # Put variable names and choices in lists to copy to R
         choices = [code['code'] for code in codes]
-        var_names = [code['characteristic'].short_name for code in codes]
+        var_names = [code['characteristic_short_name'] for code in codes]
 
         # Add information on country and language (these are MetaVariables but
         #   not Characteristics
         # (Language is not really needed currently)
-        choices.extend([question.country.iso, question.language.iso])
+        choices.extend([country, language])
         var_names.extend(['country', 'language'])
         return choices, var_names
 
-    def get_conditional_effects(self, question, codes, user, charset, what, xname):
+    def get_conditional_effects(self, country, language, codes, what, xname):
         """the conditional effects that calls the R code using
         the names in the R script. An exception may be thrown here if the
         Codings contain some value that was not in the original dataset. In
         that case no prediction can be made."""
         
-	if DEBUG: start = time.time()
+        if DEBUG: start = time.time()
         # Convert the SQP codes object to objects usable by R
-        choices, var_names = self._get_choices(question, codes, user, charset)
+        choices, var_names = self._get_choices(country, language, codes)
 #print globalenv.keys()
 #('conditional.cmv', 'conditional.qual', 'conditional.qual2', 
 #'conditional.rel', 'conditional.rel2', 'conditional.val',
@@ -119,23 +119,24 @@ class Predictor:
 #'get.sd', 'getImp', 'invlogit', 'prophesize', 'raimforest.rel', 
 #'raimforest.val', 'recode', 'rf.rel', 'rf.val', 'squeezeBlanks', 'xlevels')
 
-	result = globalenv["conditional." + what](xname, choices, var_names)
-	
-	# Don't dict because they might be ordered
+        result = globalenv["conditional." + what](xname, choices, var_names)
+        
+        # Don't dict because they might be ordered
         predictions = zip(r['names'](result), (fmt(rs) for rs in result))
 
-	if DEBUG:
-	    elapsed = time.time() - start#DEBUG
-	    print "Got conditional of {} effects for {}, took {:2.3f}s".format(what,
-		    xname, elapsed)
-	    print predictions
+        if DEBUG:
+            elapsed = time.time() - start#DEBUG
+            print "Got conditional of {} effects for {}, took {:2.3f}s".format(what,
+                    xname, elapsed)
+            print predictions
         return predictions
-
-    def get_all_conditional_effects(self, question, codes, user, charset, what):
-        """Method to obtain all the conditional effects that calls the R code using
+    
+    """
+    def get_all_conditional_effects(self, country, language, codes, what):
+        "" "Method to obtain all the conditional effects that calls the R code using
         the names in the R script. An exception may be thrown here if the
         Codings contain some value that was not in the original dataset. In
-        that case no prediction can be made."""
+        that case no prediction can be made."" "
         # Signal busy in case client wants to try another server
         #   (Only worth it when the load is very high)
         self.busy = True
@@ -144,16 +145,17 @@ class Predictor:
 
         res = {}
         for xname in xnames:
-            res[xname] = self.get_conditional_effects(question,codes,user,charset,what,xname)
+            res[xname] = self.get_conditional_effects(country, language,codes,what,xname)
 
         self.busy = False
         return res
-
+    """
+    
     def get_xlevels(self, scale_basic='0'):
-	"""Give xlevels' names"""
-	if scale_basic == '2':
-	    return list(r['names'](globalenv['xlevels.fre']))
-	return list(r['names'](globalenv['xlevels']))
+        """Give xlevels' names"""
+        if scale_basic == '2':
+            return list(r['names'](globalenv['xlevels.fre']))
+        return list(r['names'](globalenv['xlevels']))
 
 
 def main():
@@ -161,7 +163,7 @@ def main():
     Pyro4.Daemon.serveSimple(
             {
                 predictor: "predictor",
-		#r:"R",
+                #r:"R",
             },
             ns=True)
 
