@@ -33,7 +33,7 @@ class Predictor:
         self.digits = digits
         self.busy = False
         
-        r.setwd('/srv/sqp_prediction/predict/')
+        r.setwd(os.path.join(os.path.dirname(__file__), 'predict'))
         r['source']('predict.R')
 
         globalenv['digits'] = digits # Set number of digits, not really used
@@ -160,11 +160,17 @@ class Predictor:
 
 
 def main():
+    
+    try:
+        predictor_name = os.environ['PREDICTOR_NAME']
+    except:
+        predictor_name = 'predictor'
+
+    
     predictor = Predictor()
     Pyro4.Daemon.serveSimple(
             {
-                predictor: "predictor",
-                #r:"R",
+                predictor: predictor_name,
             },
             ns=True)
 
