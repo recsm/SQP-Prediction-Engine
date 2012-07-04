@@ -23,18 +23,19 @@ get.conditional.effects <- function(rf, xname, newdata=nd, xlevs,
     lvs  <- unique(xlevs[[xname]]$levels)
 
     f <- function(xval) {
-	tmpdat <- newdata
-	if(xlevs[[xname]]$is.factor){
-	    tmpdat[[xname]] <- factor(xval, levels=lvs, ordered=xlevs[[xname]]$ordered)
-	}
-	else {
-	    tmpdat[[xname]] <- xval
-	}
-	if (is.null(aggregate.func)) {
-	    return(predict(rf, newdata=tmpdat, predict.all=FALSE))
-	}
-	pred <- predict(rf, newdata=tmpdat, predict.all=TRUE)$individual
-	apply(pred, 1, aggregate.func)
+    	tmpdat <- newdata
+    	if(xlevs[[xname]]$is.factor){
+    	    tmpdat[[xname]] <- factor(xval, levels=rf$forest$xlevels[[xname]], 
+                                    ordered=xlevs[[xname]]$ordered)
+    	}
+    	else {
+    	    tmpdat[[xname]] <- xval
+    	}
+    	if (is.null(aggregate.func)) {
+    	    return(predict(rf, newdata=tmpdat, predict.all=FALSE))
+    	}
+    	pred <- predict(rf, newdata=tmpdat, predict.all=TRUE)$individual
+    	apply(pred, 1, aggregate.func)
     }
     agg.pred <- mapply(f, lvs, SIMPLIFY=FALSE)
 
@@ -102,41 +103,3 @@ squeezeBlanks <- function (text) {
     gsub(" *", "", text)
 }
 
-
-# Not used: not faster than just calling repeatedly from python
-get.all.conditional <- function(model, nd, xlevs) {
-    print("Called get.all.conditional")
-    print(system.time(
-	res <- mapply(function(xname) {
-		invlogit(get.conditional.effects(model, xname, nd, xlevs))
-	    }, names(model$forest$xlevels))
-    ))
-    print(res)
-    res
-}
-
-
-
-
-if(FALSE) { 
-    # Some helper code that creates the cached list of xlevels
-    #   Does not need to be run every time
-    get.levels <- function(x) {
-	if(is.factor(x)) {
-	    return(levels(x))
-	} 
-	if(length(uniq <- unique(x)) > 5) {
-	    return(quantile(x, na.rm=TRUE))
-	} 
-	sort(uniq)
-    }
-    lvs <- list()
-    for(i in names(data)) 
-	try(lvs[[i]] <- list('is.factor'=is.factor(data[,i]), 
-			    'ordered'=is.ordered(data[,i]),
-			     'levels'=get.levels(data[,i])
-			     ), silent=TRUE)
-    xlevels <- lvs
-    xlevels.fre <- xlevels[-grep('^(rel|val|study|item_name)$', names(xlevels))]
-    save(xlevels.fre, file="~/Documents/sqp_project/sqp/predict/xlevels-fre.Rdata")
-}

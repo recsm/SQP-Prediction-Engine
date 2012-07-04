@@ -55,9 +55,9 @@ get.nd.from.choices <- function(choices, var.names) {
     sqp.codes <- unlist(choices)
     names(sqp.codes) <- var.names
 
-    if(!"scale_basic" %in% names(sqp.codes)){
-	print(sqp.codes)
-	stop("get.nd.from.choices() got called but no scale_basic in choices.")
+    if(!"scale_basic" %in% names(sqp.codes)) {
+    	print(sqp.codes)
+    	stop("get.nd.from.choices() got called but no scale_basic in choices.")
     }
     xlevels <- if(sqp.codes['scale_basic'] == '2') { xlevels.fre } else { xlevels.cat }
 
@@ -79,7 +79,7 @@ get.nd.from.choices <- function(choices, var.names) {
     # Copy the codes than can be copied (if they are in the xlevels list and also
     # in the SQP codes provided)
     for(xname in intersect(names(xlevels), names(sqp.codes))) {
-	nd[[xname]] <- sqp.codes[xname]
+	    nd[[xname]] <- sqp.codes[xname]
     }
 
     # Domain: national politics is split according to subchar
@@ -103,11 +103,11 @@ get.nd.from.choices <- function(choices, var.names) {
 
     # Numeric characteristics
     numeric.chars <-
-	names(sqp.codes)[grep('^n(syll|words|abst|nouns|sents|umsub|sub)',
+	    names(sqp.codes)[grep('^n(syll|words|abst|nouns|sents|umsub|sub)',
 					   names(sqp.codes))]
     numcodes <- numeric()
     for(xname in numeric.chars) 
-	numcodes[xname] <- as.numeric(sqp.codes[xname])
+	    numcodes[xname] <- as.numeric(sqp.codes[xname])
 
     nd$nsyll_total    <- numcodes['nsyll_ans']  + numcodes['nsyll_quest'] 
     nd$nwords_total   <- numcodes['nwords_quest']  # Ans is all NA
@@ -144,7 +144,6 @@ get.nd.from.choices <- function(choices, var.names) {
     nd$repetition <- 0
 
 
-
     # Set missings from branches to 0, set other missings to median
     #########################################################################
 
@@ -154,25 +153,26 @@ get.nd.from.choices <- function(choices, var.names) {
     # (intropresent)
 
     for (needed.name in names(xlevels)) {
-	default.value  <- 0
-	if (!needed.name %in% names(nd)) { 
-	    # Needed varaible not found (due to branching)
-	    #   Set it to the default value
-	    if(needed.name == 'labels') default.value <- 1 # Exception
-	    if((needed.name == 'ncategories') && (sqp.codes['scale_basic'] == 1)) {
-		default.value <- 2 # Exception: Yes/No qustions
-	    }
-	    if(needed.name == 'ncategories' && !(sqp.codes['scale_basic'] %in% c(0,1))) {
-		default.value  <- sqp.codes['nfrequencies']
-	    }
-	    nd[[needed.name]] <- default.value
-	}
+    	default.value  <- 0
+    	if (!needed.name %in% names(nd)) { 
+    	    # Needed varaible not found (due to branching)
+    	    #   Set it to the default value
+    	    if(needed.name == 'labels') 
+              default.value <- 1 # Exception
+    	    if((needed.name == 'ncategories') && (sqp.codes['scale_basic'] == 1)) {
+    		    default.value <- 2 # Exception: Yes/No qustions
+    	    }
+    	    if(needed.name == 'ncategories' && !(sqp.codes['scale_basic'] %in% c(0,1))) {
+    		    default.value  <- sqp.codes['nfrequencies']
+    	    }
+    	    nd[[needed.name]] <- default.value
+    	}
     }
 
 
     nd$range.correspondence  <- 
-	recode(paste(sqp.codes['scale_trange'], sqp.codes['scale_urange']),
-	   "'0 0' = 1; '1 0' = 2; '1 1' = 3; '0 1' = 1; '0 NA' = 1; 'NA NA' = 1")
+	    recode(paste(sqp.codes['scale_trange'], sqp.codes['scale_urange']),
+	    "'0 0' = 1; '1 0' = 2; '1 1' = 3; '0 1' = 1; '0 NA' = 1; 'NA NA' = 1")
 
 
     #print('nd is now:')
@@ -183,32 +183,32 @@ get.nd.from.choices <- function(choices, var.names) {
     # Convert to proper types, using the information in xlevels
     #########################################################################
     convert.factor <- function(xname) {
-	if(!(xname %in% names(rf.xlevels))) {
-	    print(sprintf("Characteristic '%s' is converted but not used in the model.",
-		    xname))
-	}
-	else if(!(nd[[xname]] %in% rf.xlevels[[xname]])) {
-	    print(rf.xlevels)	
-	    print(sqp.codes)
-	    stop(sprintf("Could not predict because the value '%s' of
-		characteristic '%s' was not present in the training data set.
-	    Allowed are %s.",
-		nd[[xname]], xname, 
-		paste(rf.xlevels[[xname]], collapse=",")))
-	}
-	factor(nd[[xname]], levels=rf.xlevels[[xname]],
-	       ordered=xlevels[[xname]]$ordered)
+    	if(!(xname %in% names(rf.xlevels))) {
+    	    print(sprintf("Characteristic '%s' is converted but not used in the model.",
+    		    xname))
+    	}
+    	else if(!(nd[[xname]] %in% rf.xlevels[[xname]])) {
+    	    print(rf.xlevels)	
+    	    print(sqp.codes)
+    	    stop(sprintf("Could not predict because the value '%s' of
+    		characteristic '%s' was not present in the training data set.
+    	    Allowed are %s.",
+    		nd[[xname]], xname, 
+    		paste(rf.xlevels[[xname]], collapse=",")))
+    	}
+    	factor(nd[[xname]], levels=rf.xlevels[[xname]],
+    	       ordered=xlevels[[xname]]$ordered)
     }
 
     for (xname in names(xlevels)) {
-	# Convert categorical variables
-	if(xname %in% names(nd)) {
-	    if(xlevels[[xname]]$is.factor)
-		nd[[xname]] <- convert.factor(xname)
-	    # Convert rest to numerical
-	    else
-		nd[[xname]] <- as.numeric(nd[[xname]])
-	}
+    	# Convert categorical variables
+    	if(xname %in% names(nd)) {
+    	    if(xlevels[[xname]]$is.factor)
+    		nd[[xname]] <- convert.factor(xname)
+    	    # Convert rest to numerical
+    	    else
+    		nd[[xname]] <- as.numeric(nd[[xname]])
+    	}
     }
 
     return(nd)
@@ -234,12 +234,12 @@ prophesize <- function(choices, var.names) {
 
     # Models are different for frequencies or other types of questions
     if(nd$scale_basic == 2) {
-	predictor.rel  <- raimforest.fre.rel
-	predictor.val  <- raimforest.fre.val
+    	predictor.rel  <- raimforest.fre.rel
+    	predictor.val  <- raimforest.fre.val
     }
     else {
-	predictor.rel  <- raimforest.cat.rel
-	predictor.val  <- raimforest.cat.val
+    	predictor.rel  <- raimforest.cat.rel
+    	predictor.val  <- raimforest.cat.val
     }
 
     # Predict reliability coefficient
@@ -276,27 +276,27 @@ prophesize <- function(choices, var.names) {
     pre.cmv <- (1 - pre.val2) * pre.rel2
 
     return(list(
-	est.rel  =est.rel  ,
-	est.rel2  =est.rel2  ,
-	pre.rel =pre.rel ,
-	pre.rel2 =pre.rel2 ,
-
-	est.val  =est.val  ,
-	est.val2 =est.val2 ,
-	pre.val =pre.val ,
-	pre.val2 =pre.val2 ,
-
-	est.qual  =est.qual  ,
-	est.qual2 =est.qual2 ,
-	pre.qual  =pre.qual  ,
-	pre.qual2 =pre.qual2 ,
-
-	est.met=est.met,
-	pre.met=pre.met,
-
-	est.cmv =est.cmv ,
-	pre.cmv =pre.cmv 
-    ))
+    	est.rel  =est.rel  ,
+    	est.rel2  =est.rel2  ,
+    	pre.rel =pre.rel ,
+    	pre.rel2 =pre.rel2 ,
+    
+    	est.val  =est.val  ,
+    	est.val2 =est.val2 ,
+    	pre.val =pre.val ,
+    	pre.val2 =pre.val2 ,
+    
+    	est.qual  =est.qual  ,
+    	est.qual2 =est.qual2 ,
+    	pre.qual  =pre.qual  ,
+    	pre.qual2 =pre.qual2 ,
+    
+    	est.met=est.met,
+    	pre.met=pre.met,
+    
+    	est.cmv =est.cmv ,
+    	pre.cmv =pre.cmv 
+  ))
 }
 
 # Conditional effects for different coefficients
@@ -313,12 +313,12 @@ conditional.rel <- function(xname, choices, var.names) {
 
     # Models are different for frequencies or other types of questions
     if(newdata$scale_basic == 2) {
-	predictor.rel  <- raimforest.fre.rel
-	xlevs  <- xlevels.fre
+    	predictor.rel  <- raimforest.fre.rel
+    	xlevs  <- xlevels.fre
     }
     else {
-	predictor.rel <- raimforest.cat.rel
-	xlevs  <- xlevels.cat
+    	predictor.rel <- raimforest.cat.rel
+    	xlevs  <- xlevels.cat
     }
     invlogit(get.conditional.effects(predictor.rel, xname, newdata,
 				     xlevs=xlevs))
@@ -333,12 +333,12 @@ conditional.val <- function(xname, choices, var.names) {
     newdata  <- get.nd.from.choices(choices, var.names)
     # Models are different for frequencies or other types of questions
     if(newdata$scale_basic == 2) {
-	predictor.val  <- raimforest.fre.val
-	xlevs  <- xlevels.fre
+    	predictor.val  <- raimforest.fre.val
+    	xlevs  <- xlevels.fre
     }
     else {
-	predictor.val <- raimforest.cat.val
-	xlevs  <- xlevels.cat
+    	predictor.val <- raimforest.cat.val
+    	xlevs  <- xlevels.cat
     }
     invlogit(get.conditional.effects(predictor.val, xname, newdata, xlevs=xlevs))
 }
@@ -370,12 +370,12 @@ conditional.rel.all <- function(choices, var.names) {
 
     # Models are different for frequencies or other types of questions
     if(newdata$scale_basic == 2) {
-	predictor.rel  <- raimforest.fre.rel
-	xlevs  <- xlevels.fre
+    	predictor.rel  <- raimforest.fre.rel
+    	xlevs  <- xlevels.fre
     }
     else {
-	predictor.rel <- rf.rel
-	xlevs  <- xlevels
+    	predictor.rel <- rf.rel
+    	xlevs  <- xlevels
     }
     get.all.conditional(predictor.rel, nd=newdata, xlevs=xlevs)
 }
