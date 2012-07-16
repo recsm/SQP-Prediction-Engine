@@ -2,7 +2,7 @@
 # DEBUG hardcode path
 import sys
 import os
-
+import threading
 import time
 import Pyro4
 
@@ -27,12 +27,14 @@ def fmt(num, digits=3):
 class Predictor:
     """Calls the R functions in predict.R to obtain predictions given the SQP
     codes."""
+    
 
     def __init__(self, digits=3):
         """Load in the predictor objects in R. This takes a few seconds."""
         self.digits = digits
-        self.busy = False
-        
+#        self.busy = False
+        self.lock = threading.Lock()
+            
         r.setwd(os.path.join(os.path.dirname(__file__), 'predict'))
         r['source']('predict.R')
 
@@ -73,19 +75,22 @@ class Predictor:
         codes provided."""
         # Signal busy in case client wants to try another server
         #   (Only worth it when the load is very high)
-        self.busy = True
-
-        # Convert the SQP codes object to objects usable by
-        choices, var_names = self._get_choices(country, language, codes)
-
-        # Obtain the predictions, getting rid of rpy2 classes
-        result = globalenv['prophesize'](choices, var_names)
-
-        # values are lists (possibly of length 1) of the predicted values.
-        predictions = dict(zip(r['names'](result), result))
-
-        self.busy = False
-        return predictions
+ #       self.busy = True
+        self.lock.acquire()
+        try:
+            # Convert the SQP codes object to objects usable by
+            choices, var_names = self._get_choices(country, language, codes)
+    
+            # Obtain the predictions, getting rid of rpy2 classes
+            result = globalenv['prophesize'](choices, var_names)
+    
+            # values are lists (possibly of length 1) of the predicted values.
+            predictions = dict(zip(r['names'](result), result))
+    
+#            self.busy = False
+            return predictions
+        finally:
+            self.lock.release()
 
     def _get_choices(self, country, language, codes):
         """Take country, language and codes and return list of choices and names, usable
@@ -122,8 +127,14 @@ class Predictor:
 
         result = globalenv["conditional." + what](xname, choices, var_names)
         
-        # Don't dict because they might be ordered
-        predictions = zip(r['names'](result), (fmt(rs) for rs in result))
+        self.lock.acquire()
+        try:
+            
+            # Don't dict because they might be ordered
+            predictions = zip(r['names'](result), (fmt(rs) for rs in result))
+
+        finally:
+            self.lock.release()
 
         if DEBUG:
             elapsed = time.time() - start#DEBUG
@@ -154,9 +165,14 @@ class Predictor:
     
     def get_xlevels(self, scale_basic='0'):
         """Give xlevels' names"""
-        if scale_basic == '2':
-            return list(r['names'](globalenv['xlevels.fre']))
-        return list(r['names'](globalenv['xlevels']))
+        
+        self.lock.acquire()
+        try:
+            if scale_basic == '2':
+                return list(r['names'](globalenv['xlevels.fre']))
+            return list(r['names'](globalenv['xlevels']))
+        finally:
+            self.lock.release()
 
 
 def main():
