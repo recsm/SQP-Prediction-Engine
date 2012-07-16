@@ -34,12 +34,18 @@ class Predictor:
         self.digits = digits
 #        self.busy = False
         self.lock = threading.Lock()
-            
-        r.setwd(os.path.join(os.path.dirname(__file__), 'predict'))
-        r['source']('predict.R')
+        
+        self.lock.acquire()
+        
+        try:
+            r.setwd(os.path.join(os.path.dirname(__file__), 'predict'))
+            r['source']('predict.R')
+            globalenv['digits'] = digits # Set number of digits, not really used
+            globalenv['django.debug'] = DEBUG # Pass Django debug setting
+        finally:
+            self.lock.release()
 
-        globalenv['digits'] = digits # Set number of digits, not really used
-        globalenv['django.debug'] = DEBUG # Pass Django debug setting
+        
 
 
     def _summarize_predictions(self, est, pre, digits=3):
@@ -125,11 +131,10 @@ class Predictor:
 #'get.sd', 'getImp', 'invlogit', 'prophesize', 'raimforest.rel', 
 #'raimforest.val', 'recode', 'rf.rel', 'rf.val', 'squeezeBlanks', 'xlevels')
 
-        result = globalenv["conditional." + what](xname, choices, var_names)
         
         self.lock.acquire()
         try:
-            
+            result = globalenv["conditional." + what](xname, choices, var_names)
             # Don't dict because they might be ordered
             predictions = zip(r['names'](result), (fmt(rs) for rs in result))
 
