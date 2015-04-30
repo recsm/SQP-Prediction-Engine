@@ -81,7 +81,9 @@ get.nd.from.choices <- function(choices, var.names) {
     for(xname in intersect(names(xlevels), names(sqp.codes))) {
 	    nd[[xname]] <- sqp.codes[xname]
     }
-
+    # Recode showcard letters to the most-used option (0) since there are no letters
+    nd$showc_letter[nd$showc_letter == 2] <- 0
+    
     # Domain: national politics is split according to subchar
     #  (Code 1 should guarantee that natpoldomain is available, otherwise an error)
     # TODO: Should the missing ones be coded "Other"?
