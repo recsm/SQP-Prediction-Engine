@@ -164,9 +164,12 @@ get.nd.from.choices <- function(choices, var.names) {
     	    if((needed.name == 'ncategories') && (sqp.codes['scale_basic'] == 1)) {
     		    default.value <- 2 # Exception: Yes/No qustions
     	    }
-    	    if(needed.name == 'ncategories' && !(sqp.codes['scale_basic'] %in% c(0,1))) {
-    		    default.value  <- sqp.codes['nfrequencies']
+    	    if(needed.name == 'ncategories' && (sqp.codes['scale_basic'] == 2)) {
+    		    default.value  <- sqp.codes['nfrequencies'] # for frequencies
     	    }
+            if(needed.name == 'ncategories' && (sqp.codes['scale_basic'] %in% c(3, 4))) {
+                default.value  <- sqp.codes['scale_max'] # line production/magnitude est.
+            }
     	    nd[[needed.name]] <- default.value
     	}
     }
