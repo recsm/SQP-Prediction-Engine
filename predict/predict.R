@@ -76,13 +76,13 @@ get.nd.from.choices <- function(choices, var.names) {
     # Recode SQP codings to prediction variables
     #########################################################################
 
-    # Copy the codes than can be copied (if they are in the xlevels list and also
+    # Copy the codes that can be copied (if they are in the xlevels list and also
     # in the SQP codes provided)
     for(xname in intersect(names(xlevels), names(sqp.codes))) {
 	    nd[[xname]] <- sqp.codes[xname]
     }
     # Recode showcard letters to the most-used option (0) since there are no letters
-    nd$showc_letter[nd$showc_letter == 2] <- 0
+    if(nd$showc_letter == 2) nd$showc_letter <- 0
     
     # Domain: national politics is split according to subchar
     #  (Code 1 should guarantee that natpoldomain is available, otherwise an error)
