@@ -81,8 +81,6 @@ get.nd.from.choices <- function(choices, var.names) {
     for(xname in intersect(names(xlevels), names(sqp.codes))) {
 	    nd[[xname]] <- sqp.codes[xname]
     }
-    # Recode showcard letters to the most-used option (0) since there are no letters
-    if(nd$showc_letter == 2) nd$showc_letter <- 0
     
     # Domain: national politics is split according to subchar
     #  (Code 1 should guarantee that natpoldomain is available, otherwise an error)
@@ -174,6 +172,8 @@ get.nd.from.choices <- function(choices, var.names) {
     	}
     }
 
+    # Recode showcard letters to the most-used option (0) since there are no letters
+    if(nd$showc_letter == 2) nd$showc_letter <- 0
 
     nd$range.correspondence  <- 
 	    recode(paste(sqp.codes['scale_trange'], sqp.codes['scale_urange']),
